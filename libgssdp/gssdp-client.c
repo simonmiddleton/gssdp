@@ -35,6 +35,8 @@
 #include <config.h>
 #include <sys/types.h>
 #include <glib.h>
+#include <gio/gio.h>
+
 #ifndef G_OS_WIN32
 #include <sys/socket.h>
 #include <sys/utsname.h>
@@ -209,6 +211,7 @@ gssdp_client_initable_init (GInitable                   *initable,
                             GError                     **error)
 {
         GSSDPClient *client = GSSDP_CLIENT (initable);
+        GInetAddress *address = NULL;
         GError *internal_error = NULL;
 
         if (client->priv->initialized)
@@ -234,10 +237,12 @@ gssdp_client_initable_init (GInitable                   *initable,
         if (!init_network_info (client, &internal_error))
                 goto errors;
 
+        address = g_inet_address_new_from_string (client->priv->device.host_ip);
+
         /* Set up sockets (Will set errno if it failed) */
         client->priv->request_socket =
                 gssdp_socket_source_new (GSSDP_SOCKET_SOURCE_TYPE_REQUEST,
-                                         gssdp_client_get_host_ip (client),
+                                         address,
                                          client->priv->socket_ttl,
                                          client->priv->device.iface_name,
                                          &internal_error);
@@ -252,7 +257,7 @@ gssdp_client_initable_init (GInitable                   *initable,
 
         client->priv->multicast_socket =
                 gssdp_socket_source_new (GSSDP_SOCKET_SOURCE_TYPE_MULTICAST,
-                                         gssdp_client_get_host_ip (client),
+                                         address,
                                          client->priv->socket_ttl,
                                          client->priv->device.iface_name,
                                          &internal_error);
@@ -272,7 +277,7 @@ gssdp_client_initable_init (GInitable                   *initable,
                                          NULL,
                                          &internal_error,
                                          "type", GSSDP_SOCKET_SOURCE_TYPE_SEARCH,
-                                         "host-ip", gssdp_client_get_host_ip (client),
+                                         "address", address,
                                          "ttl", client->priv->socket_ttl,
                                          "port", client->priv->msearch_port,
                                          "device-name", client->priv->device.iface_name,
@@ -284,7 +289,10 @@ gssdp_client_initable_init (GInitable                   *initable,
                                          (GSourceFunc) search_socket_source_cb,
                                          client);
         }
+
  errors:
+        g_object_unref (address);
+
         if (!client->priv->request_socket ||
             !client->priv->multicast_socket ||
             !client->priv->search_socket) {
