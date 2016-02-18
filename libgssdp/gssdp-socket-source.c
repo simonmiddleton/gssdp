@@ -221,7 +221,7 @@ gssdp_socket_source_do_init (GInitable                   *initable,
         }
 
         /* Enable broadcasting */
-/*        g_socket_set_broadcast (self->priv->socket, TRUE);
+        g_socket_set_broadcast (self->priv->socket, TRUE);
 
         if (!gssdp_socket_enable_info (self->priv->socket,
                                        TRUE,
@@ -232,13 +232,13 @@ gssdp_socket_source_do_init (GInitable                   *initable,
 
                 goto error;
         }
-*/
+
         /* TTL */
         if (!self->priv->ttl)
                 /* UDA/1.0 says 4, UDA/1.1 says 2 */
                 self->priv->ttl = 4;
 
-        //g_socket_set_multicast_ttl (self->priv->socket, self->priv->ttl);
+        g_socket_set_multicast_ttl (self->priv->socket, self->priv->ttl);
 
 
         /* Set up additional things according to the type of socket desired */
@@ -294,7 +294,7 @@ gssdp_socket_source_do_init (GInitable                   *initable,
          * there, also we nees SO_REUSEPORT on OpenBSD. This is a nop
          * everywhere else.
          */
-/*        if (!gssdp_socket_reuse_address (self->priv->socket,
+        if (!gssdp_socket_reuse_address (self->priv->socket,
                                          TRUE,
                                          &inner_error)) {
                 g_propagate_prefixed_error (
@@ -303,7 +303,7 @@ gssdp_socket_source_do_init (GInitable                   *initable,
                                 "Failed to enable reuse");
 
                 goto error;
-        } */
+        }
 
         /* Bind to requested port and address */
         if (!g_socket_bind (self->priv->socket,
